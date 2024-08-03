@@ -78,6 +78,10 @@ FOVring.Transparency = 1
 FOVring.Color = Color3.fromRGB(255, 128, 128)
 FOVring.Position = Camera.ViewportSize / 2
 
+if UserInputService.TouchEnabled then
+    FOVring.Filled = false
+end
+
 -- Update ESP lines and aim assist
 local loop = RunService.RenderStepped:Connect(function()
     updateESPLines()
@@ -115,3 +119,45 @@ Players.PlayerRemoving:Connect(function(player)
         ESPLines[player] = nil
     end
 end)
+
+-- Create the notification
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "NotificationGui"
+screenGui.Parent = PlayerGui
+
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 300, 0, 100)
+frame.Position = UDim2.new(0.5, -150, 0.5, -50)
+frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+frame.BackgroundTransparency = 0.5
+frame.Parent = screenGui
+
+local textLabel = Instance.new("TextLabel")
+textLabel.Size = UDim2.new(1, 0, 0.7, 0)
+textLabel.Position = UDim2.new(0, 0, 0, 0)
+textLabel.Text = "Thanks for using Solanarium"
+textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+textLabel.BackgroundTransparency = 1
+textLabel.Font = Enum.Font.SourceSans
+textLabel.TextSize = 24
+textLabel.Parent = frame
+
+local textButton = Instance.new("TextButton")
+textButton.Size = UDim2.new(0.4, 0, 0.3, 0)
+textButton.Position = UDim2.new(0.3, 0, 0.7, 0)
+textButton.Text = "Thanks!"
+textButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+textButton.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+textButton.Font = Enum.Font.SourceSans
+textButton.TextSize = 24
+textButton.Parent = frame
+
+-- Function to remove the notification
+local function removeNotification()
+    screenGui:Destroy()
+end
+
+-- Connect the button to the function
+textButton.MouseButton1Click:Connect(removeNotification)
