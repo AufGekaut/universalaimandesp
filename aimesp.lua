@@ -77,10 +77,7 @@ FOVring.Radius = fov
 FOVring.Transparency = 1
 FOVring.Color = Color3.fromRGB(255, 128, 128)
 FOVring.Position = Camera.ViewportSize / 2
-
-if UserInputService.TouchEnabled then
-    FOVring.Filled = false
-end
+FOVring.Filled = false -- Ensure the circle is not filled
 
 -- Update ESP lines and aim assist
 local loop = RunService.RenderStepped:Connect(function()
