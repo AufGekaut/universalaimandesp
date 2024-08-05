@@ -70,21 +70,46 @@ local function getClosest(cframe)
 end
 
 -- FOV ring setup
-local FOVring = Drawing.new("Circle")
-FOVring.Visible = true
-FOVring.Thickness = 1.5
-FOVring.Radius = fov
-FOVring.Transparency = 1
-FOVring.Color = Color3.fromRGB(255, 128, 128)
-FOVring.Position = Camera.ViewportSize / 2
+local function drawFOVRing()
+    local segments = 60
+    local angle = math.pi * 2 / segments
+    local lines = {}
 
-if UserInputService.TouchEnabled then
-    FOVring.Filled = false
+    for i = 1, segments do
+        local line = Drawing.new("Line")
+        line.Thickness = 1.5
+        line.Transparency = 1
+        line.Color = Color3.fromRGB(255, 128, 128)
+        table.insert(lines, line)
+    end
+
+    local function updateFOVRing()
+        local center = Camera.ViewportSize / 2
+        for i = 1, segments do
+            local theta1 = angle * (i - 1)
+            local theta2 = angle * i
+            local p1 = center + Vector2.new(math.cos(theta1), math.sin(theta1)) * fov
+            local p2 = center + Vector2.new(math.cos(theta2), math.sin(theta2)) * fov
+            local line = lines[i]
+            line.From = p1
+            line.To = p2
+            line.Visible = true
+        end
+    end
+
+    return updateFOVRing, function()
+        for _, line in pairs(lines) do
+            line:Remove()
+        end
+    end
 end
+
+local updateFOVRing, removeFOVRing = drawFOVRing()
 
 -- Update ESP lines and aim assist
 local loop = RunService.RenderStepped:Connect(function()
     updateESPLines()
+    updateFOVRing()
 
     local pressed = UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2)
     local localPlay = LocalPlayer.Character
@@ -104,7 +129,7 @@ local loop = RunService.RenderStepped:Connect(function()
     -- Cleanup logic
     if UserInputService:IsKeyDown(Enum.KeyCode.Delete) then
         loop:Disconnect()
-        FOVring:Remove()
+        removeFOVRing()
         for _, line in pairs(ESPLines) do
             line:Remove()
         end
