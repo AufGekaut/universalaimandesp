@@ -20,10 +20,16 @@ end
 -- Table to store ESP lines
 local ESPLines = {}
 
--- Function to update ESP lines
-local function updateESPLines()
+-- Table to store ESP names
+local ESPNames = {}
+
+-- Function to update ESP lines and names
+local function updateESP()
     for _, line in pairs(ESPLines) do
         line.Visible = false
+    end
+    for _, name in pairs(ESPNames) do
+        name.Visible = false
     end
 
     for _, player in pairs(Players:GetPlayers()) do
@@ -43,6 +49,14 @@ local function updateESPLines()
                     line.Color = teamColor
                     line.Visible = true
                     ESPLines[player] = line
+
+                    local nameTag = ESPNames[player] or Drawing.new("Text")
+                    nameTag.Text = player.Name
+                    nameTag.Position = Vector2.new(screenPosition.X, screenPosition.Y - 15)
+                    nameTag.Color = teamColor
+                    nameTag.Size = 16
+                    nameTag.Visible = true
+                    ESPNames[player] = nameTag
                 end
             end
         end
@@ -56,8 +70,8 @@ local function getClosest(cframe)
     local mag = math.huge
 
     for _, player in pairs(Players:GetPlayers()) do
-        if player.Character and player.Character:FindFirstChild("Head") and player.Character:FindFirstChild("Humanoid") and player.Character:FindFirstChild("HumanoidRootPart") and player ~= LocalPlayer and (player.Team ~= LocalPlayer.Team or not teamCheck) then
-            local magBuf = (player.Character.Head.Position - ray:ClosestPoint(player.Character.Head.Position)).Magnitude
+        if player.Character and player.Character:FindFirstChild("Humanoid") and player.Character:FindFirstChild("HumanoidRootPart") and player ~= LocalPlayer and (player.Team ~= LocalPlayer.Team or not teamCheck) then
+            local magBuf = (player.Character.HumanoidRootPart.Position - ray:ClosestPoint(player.Character.HumanoidRootPart.Position)).Magnitude
 
             if magBuf < mag then
                 mag = magBuf
@@ -108,7 +122,7 @@ local updateFOVRing, removeFOVRing = drawFOVRing()
 
 -- Update ESP lines and aim assist
 local loop = RunService.RenderStepped:Connect(function()
-    updateESPLines()
+    updateESP()
     updateFOVRing()
 
     local pressed = UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2)
@@ -118,10 +132,10 @@ local loop = RunService.RenderStepped:Connect(function()
     if pressed then
         local curTar = getClosest(Camera.CFrame)
         if curTar then
-            local ssHeadPoint = Camera:WorldToScreenPoint(curTar.Character.Head.Position)
-            ssHeadPoint = Vector2.new(ssHeadPoint.X, ssHeadPoint.Y)
-            if (ssHeadPoint - zz).Magnitude < fov then
-                Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, curTar.Character.Head.Position), smoothing)
+            local ssTorsoPoint = Camera:WorldToScreenPoint(curTar.Character.HumanoidRootPart.Position)
+            ssTorsoPoint = Vector2.new(ssTorsoPoint.X, ssTorsoPoint.Y)
+            if (ssTorsoPoint - zz).Magnitude < fov then
+                Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, curTar.Character.HumanoidRootPart.Position), smoothing)
             end
         end
     end
@@ -133,56 +147,22 @@ local loop = RunService.RenderStepped:Connect(function()
         for _, line in pairs(ESPLines) do
             line:Remove()
         end
+        for _, name in pairs(ESPNames) do
+            name:Remove()
+        end
         ESPLines = {}
+        ESPNames = {}
     end
 end)
 
--- Clean up ESP lines when the player leaves
+-- Clean up ESP lines and names when the player leaves
 Players.PlayerRemoving:Connect(function(player)
     if ESPLines[player] then
         ESPLines[player]:Remove()
         ESPLines[player] = nil
     end
+    if ESPNames[player] then
+        ESPNames[player]:Remove()
+        ESPNames[player] = nil
+    end
 end)
-
--- Create the notification
-local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
-
-local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "NotificationGui"
-screenGui.Parent = PlayerGui
-
-local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 300, 0, 100)
-frame.Position = UDim2.new(0.5, -150, 0.5, -50)
-frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-frame.BackgroundTransparency = 0.5
-frame.Parent = screenGui
-
-local textLabel = Instance.new("TextLabel")
-textLabel.Size = UDim2.new(1, 0, 0.7, 0)
-textLabel.Position = UDim2.new(0, 0, 0, 0)
-textLabel.Text = "Thanks for using Solanarium"
-textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-textLabel.BackgroundTransparency = 1
-textLabel.Font = Enum.Font.SourceSans
-textLabel.TextSize = 24
-textLabel.Parent = frame
-
-local textButton = Instance.new("TextButton")
-textButton.Size = UDim2.new(0.4, 0, 0.3, 0)
-textButton.Position = UDim2.new(0.3, 0, 0.7, 0)
-textButton.Text = "Thanks!"
-textButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-textButton.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
-textButton.Font = Enum.Font.SourceSans
-textButton.TextSize = 24
-textButton.Parent = frame
-
--- Function to remove the notification
-local function removeNotification()
-    screenGui:Destroy()
-end
-
--- Connect the button to the function
-textButton.MouseButton1Click:Connect(removeNotification)
